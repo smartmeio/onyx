@@ -12,7 +12,8 @@
 #
 # Interfaces:
 #     LoadConnector   full index of all files in the folders
-#     PollConnector   only the files changed in [start, end] (see WebDAVEntry.changed_at)
+#     PollConnector   only the files changed in [start, end] (see WebDAVEntry.changed_at),
+#                     plus the files of the folders changed in [start, end] (renames, moves)
 #     SlimConnector   only the document ids, for pruning of deleted files
 
 from collections.abc import Iterator
@@ -162,12 +163,12 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
         batch_size: int = INDEX_BATCH_SIZE,
     ) -> None:
         self.base_url = base_url.rstrip("/")
-        
+
         # A set removes duplicate folders. Sorting gives a stable order.
         # An empty list means the full base_url.
         self.folder_paths = sorted({normalize_folder(p) for p in folder_paths}) or ["/"]
         self.recursive = recursive
-       
+
         # None: no limit. 1: only the direct subfolders of each folder.
         self.max_depth = max_depth
         self.max_file_size_bytes = max_file_size_bytes
@@ -186,7 +187,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
     def load_credentials(self, credentials: dict[str, Any]) -> (dict[str, Any] | None):  # Create an HTTP session with Basic Auth. Onyx calls this before indexing.
         username = credentials.get("webdav_username")
         password = credentials.get("webdav_password")
-        
+
         if not username or not password:
             raise ConnectorMissingCredentialError("WebDAV: the credential must contain webdav_username and webdav_password")
 
@@ -233,13 +234,13 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
             )
         if resp.status_code == 404:
             raise ConnectorValidationError(f"WebDAV: {what} not found (HTTP 404).")
-        
+
         if resp.status_code == 405:
             raise ConnectorValidationError(
                 f"WebDAV: {what} does not accept WebDAV requests (HTTP 405). "
                 f"The URL must point to a WebDAV folder, {NEXTCLOUD_URL_EXAMPLE}."
             )
-        
+
         if resp.status_code >= 400:
             raise ConnectorValidationError(f"WebDAV: unexpected HTTP {resp.status_code} on {what}.")
 
@@ -323,9 +324,8 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
 
     # ------------------------------------------------------------ traversal
 
-    def iter_files(self) -> Iterator[WebDAVEntry]:  
-        
-        # Yield every file in the configured folders, without folders. The walk uses a stack and PROPFIND depth 1 on each folder, so it reads one folder level for each request.
+    def iter_files(self) -> Iterator[tuple[WebDAVEntry, WebDAVEntry | None]]:  # Yield (file, parent folder) for every file in the configured folders. The walk uses a stack and PROPFIND depth 1 on each folder, so it reads one folder level for each request. The parent comes from the same response: depth 1 also returns the folder itself.
+
         # File paths already yielded. Overlapping folders (e.g. /A and /A/B)
         # list the same files more than one time.
         seen: set[str] = set()
@@ -338,14 +338,15 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
                 url, level = stack.pop()
                 entries = self.propfind(url, "1", f"folder {folder}")
                 self_path = urlparse(url).path.rstrip("/")
+                parent = next((e for e in entries if unquote(urlparse(e.href).path.rstrip("/")) == unquote(self_path)), None)
 
                 for entry in entries:
                     entry_path = urlparse(entry.href).path.rstrip("/")
 
                     # Depth 1 also returns the folder itself: skip it.
-                    if unquote(entry_path) == unquote(self_path):
+                    if entry is parent:
                         continue
-                    
+
                     if entry.is_dir:# visited_dirs prevents loops if a server lists a folder twice.
                         if (self.should_descend(level + 1)and entry_path not in visited_dirs):
                             visited_dirs.add(entry_path)
@@ -355,7 +356,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
                     if entry_path in seen:
                         continue
                     seen.add(entry_path)
-                    yield entry
+                    yield entry, parent
 
     def should_descend(self, level: int) -> (bool):  # True if the walk can enter a subfolder at this level (1 = direct child).
         if not self.recursive:
@@ -375,7 +376,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
             return False
         if get_file_ext(name) in SKIPPED_EXTENSIONS:
             return False
-        
+
         if entry.size is not None and entry.size > self.max_file_size_bytes:
             logger.info("WebDAV: skip %s, its size (%s bytes) is larger than the limit", name, entry.size,)
             return False
@@ -408,22 +409,35 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
                 "path": folder_path,
                 "folder": folder_path.rsplit("/", 1)[0] or "/",
             },
+            # Onyx skips a document whose content hash did not change. The hash
+            # covers doc_metadata but not semantic_identifier, link or metadata,
+            # so the path goes here: a renamed or moved file is then updated.
+            doc_metadata={"path": folder_path},
             # Polling compares this date with the [start, end] window.
             doc_updated_at=entry.changed_at,
         )
 
-    def yield_documents(self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:  # Shared body of the full index and of polling. With start and end set, only the files changed in that window (see WebDAVEntry.changed_at) are downloaded. Documents go out in batches of batch_size.
+    @staticmethod
+    def changed_in_window(entry: WebDAVEntry, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None) -> bool:  # True if the entry changed in [start, end]. An entry without any change date counts as changed.
+        if entry.changed_at is None:
+            return True
+        ts = entry.changed_at.timestamp()
+        return (start is None or ts >= start) and (end is None or ts <= end)
+
+    def yield_documents(self, start: SecondsSinceUnixEpoch | None, end: SecondsSinceUnixEpoch | None) -> GenerateDocumentsOutput:  # Shared body of the full index and of polling. With start and end set, only the files changed in that window are downloaded (see WebDAVEntry.changed_at), plus all the files of a folder that changed in the window. Documents go out in batches of batch_size.
         batch: list[Document | HierarchyNode] = []
 
-        for entry in self.iter_files():
+        for entry, parent in self.iter_files():
             if not self.should_index(entry):
                 continue
-            # A file without any change date is always indexed.
-            if start is not None or end is not None:
-                ts = entry.changed_at.timestamp() if entry.changed_at else None
-
-                if ts is not None and ((start is not None and ts < start) or (end is not None and ts > end)):
-                    continue
+            # A rename or a move keeps the dates of the file, but Nextcloud
+            # updates the date of the folders that contain it. So a changed
+            # folder sends all its files: Onyx skips the unchanged ones with
+            # the content hash, and updates the renamed or moved one. A folder
+            # without a date is ignored, else every poll sends all its files.
+            folder_changed = (parent is not None and parent.changed_at is not None and self.changed_in_window(parent, start, end))
+            if not (self.changed_in_window(entry, start, end) or folder_changed):
+                continue
             try:
                 doc = self.to_document(entry)
             # Auth errors stop the run: all next files would fail the same way.
@@ -459,7 +473,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
     ) -> GenerateSlimDocumentOutput:  # Return the ids of all indexable files, without download. Onyx deletes from the index the documents that are not in this list. So the time window is ignored: pruning needs the full list. A missing folder raises (404) and does not return an empty list, because an empty list would delete all the documents of this connector.
         batch: list[SlimDocument | HierarchyNode] = []
 
-        for entry in self.iter_files():
+        for entry, _ in self.iter_files():
             if not self.should_index(entry):
                 continue
             batch.append(SlimDocument(id=self.doc_id(entry)))
@@ -497,7 +511,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
             )
 
         base_url_response = self.send("PROPFIND", self.base_url + "/", headers={"Depth": "0"})
-        
+
         # A 404 on the base URL usually means a wrong user name at its end:
         # the folders can exist and still be unreachable from this URL.
         if base_url_response.status_code == 404:
@@ -510,7 +524,7 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
 
         for folder in self.folder_paths:
             folder_response = self.send("PROPFIND", self.folder_url(folder), headers={"Depth": "0"})
-            
+
             if folder_response.status_code == 404:
                 raise ConnectorValidationError(
                     f"WebDAV: folder {folder} not found in {self.base_url} "
@@ -519,10 +533,10 @@ class WebDAVConnector(LoadConnector, PollConnector, SlimConnector):  # Indexes t
                 )
             self.raise_for_status(folder_response, f"folder {folder}")
             entries = self.parse_multistatus(folder_response.content)
-            
+
             if not entries:
                 raise ConnectorValidationError(f"WebDAV: the server returned no data for folder {folder}.")
-            
+
             if not entries[0].is_dir:
                 raise ConnectorValidationError(f"WebDAV: {folder} is a file, not a folder. Enter the path of a folder.")
 
