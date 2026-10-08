@@ -43,6 +43,7 @@ backend = [
     "croniter==6.2.4",
     "cron-descriptor==2.0.8",
     "dask==2026.1.1",
+    "defusedxml==0.7.1",
     "discord.py==2.7.1",
     "distributed==2026.1.1",
     "fastapi-users==15.0.4",

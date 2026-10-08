@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -4185,6 +4185,7 @@ wheels = [
 name = "onyx"
 version = "0.0.0"
 source = { virtual = "." }
+default-groups = ["backend", "dev", "ee", "model-server"]
 dependencies = [
     { name = "agent-client-protocol" },
     { name = "aioboto3" },
@@ -4225,6 +4226,7 @@ backend = [
     { name = "cron-descriptor" },
     { name = "croniter" },
     { name = "dask" },
+    { name = "defusedxml" },
     { name = "discord-py" },
     { name = "distributed" },
     { name = "docker" },
@@ -4404,6 +4406,7 @@ backend = [
     { name = "cron-descriptor", specifier = "==2.0.8" },
     { name = "croniter", specifier = "==6.2.4" },
     { name = "dask", specifier = "==2026.1.1" },
+    { name = "defusedxml", specifier = "==0.7.1" },
     { name = "discord-py", specifier = "==2.7.1" },
     { name = "distributed", specifier = "==2026.1.1" },
     { name = "docker", specifier = "==7.1.0" },
