@@ -993,6 +993,9 @@
         "lumapps": {
           "description": "Pages et communautés de l'intranet"
         },
+        "webdav": {
+          "description": "Connecteur pour serveurs WebDAV"
+        },
         "canvas": {
           "description": "Cours, pages et annonces"
         },
@@ -3370,6 +3373,7 @@
         "gongBaseUrl": "Facultatif. Pour les données hors des États-Unis, indiquez l'hôte de votre région, par exemple https://[region].api.gong.io.",
         "jiraUserEmail": "Obligatoire pour Jira Cloud.",
         "lumappsServiceUser": "L'utilisateur au nom duquel indexer.",
+        "webdavAppPassword": "Pour Nextcloud, utilisez un mot de passe d'application (Paramètres > Sécurité > Appareils et sessions).",
         "outlineBaseUrl": "Par exemple https://app.getoutline.com, ou l'URL de votre instance auto-hébergée.",
         "pfxFile": "Un fichier PFX.",
         "testrailBaseUrl": "Par exemple https://yourcompany.testrail.io."

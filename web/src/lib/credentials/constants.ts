@@ -195,6 +195,15 @@ export const CREDENTIAL_SPECS = {
       gitlab_access_token: secret("apiToken"),
     },
   }),
+  webdav: defineCredentialSpec({
+    brandName: "WebDAV",
+    fields: {
+      webdav_username: text("username"),
+      webdav_password: secret("password", {
+        hint: { key: "webdavAppPassword" },
+      }),
+    },
+  }),
   lumapps: defineCredentialSpec({
     brandName: "LumApps",
     fields: {

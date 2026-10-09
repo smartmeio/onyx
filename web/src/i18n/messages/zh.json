@@ -993,6 +993,9 @@
         "lumapps": {
           "description": "内网页面和社区"
         },
+        "webdav": {
+          "description": "WebDAV 服务器连接器"
+        },
         "canvas": {
           "description": "课程、页面和公告"
         },
@@ -3370,6 +3373,7 @@
         "gongBaseUrl": "可选。美国以外的数据请设置你所在区域的主机，例如 https://[region].api.gong.io。",
         "jiraUserEmail": "Jira Cloud 必填。",
         "lumappsServiceUser": "要代表其建立索引的用户。",
+        "webdavAppPassword": "Nextcloud 请使用应用密码（设置 > 安全 > 设备和会话）。",
         "outlineBaseUrl": "例如 https://app.getoutline.com，或你的自托管 URL。",
         "pfxFile": "PFX 文件。",
         "testrailBaseUrl": "例如 https://yourcompany.testrail.io。"

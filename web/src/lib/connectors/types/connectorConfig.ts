@@ -27,6 +27,14 @@ export interface GitlabConfig {
   include_issues: boolean;
 }
 
+export interface WebDAVConfig {
+  base_url: string;
+  folder_paths: string[];
+  recursive?: boolean;
+  max_depth?: number;
+  max_file_size_bytes?: number;
+}
+
 export interface LumAppsConfig {
   base_url: string;
   organization_id: string;

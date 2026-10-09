@@ -993,6 +993,9 @@
         "lumapps": {
           "description": "인트라넷 페이지와 커뮤니티"
         },
+        "webdav": {
+          "description": "WebDAV 서버 커넥터"
+        },
         "canvas": {
           "description": "강좌, 페이지, 공지"
         },
@@ -3370,6 +3373,7 @@
         "gongBaseUrl": "선택 사항입니다. 미국 외 지역의 데이터는 해당 리전의 호스트를 입력하세요(예: https://[region].api.gong.io).",
         "jiraUserEmail": "Jira Cloud에 필요합니다.",
         "lumappsServiceUser": "대신 인덱싱할 사용자입니다.",
+        "webdavAppPassword": "Nextcloud에서는 앱 비밀번호를 사용하세요(설정 > 보안 > 기기 및 세션).",
         "outlineBaseUrl": "예: https://app.getoutline.com 또는 자체 호스팅 URL.",
         "pfxFile": "PFX 파일입니다.",
         "testrailBaseUrl": "예: https://yourcompany.testrail.io."

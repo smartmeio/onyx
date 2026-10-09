@@ -993,6 +993,9 @@
         "lumapps": {
           "description": "Intranet-Seiten und Communities"
         },
+        "webdav": {
+          "description": "Connector für WebDAV-Server"
+        },
         "canvas": {
           "description": "Kurse, Seiten und Ankündigungen"
         },
@@ -3370,6 +3373,7 @@
         "gongBaseUrl": "Optional. Für Daten außerhalb der USA gib den Host deiner Region an, z. B. https://[region].api.gong.io.",
         "jiraUserEmail": "Erforderlich für Jira Cloud.",
         "lumappsServiceUser": "Der Benutzer, in dessen Namen indiziert wird.",
+        "webdavAppPassword": "Verwenden Sie für Nextcloud ein App-Passwort (Einstellungen > Sicherheit > Geräte & Sitzungen).",
         "outlineBaseUrl": "Zum Beispiel https://app.getoutline.com oder deine selbst gehostete URL.",
         "pfxFile": "Eine PFX-Datei.",
         "testrailBaseUrl": "Zum Beispiel https://yourcompany.testrail.io."

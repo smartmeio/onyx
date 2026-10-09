@@ -67,6 +67,7 @@ export enum ValidSources {
   Lumapps = "lumapps",
   Canvas = "canvas",
   Zoom = "zoom",
+  WebDAV = "webdav",
 
   // Craft-specific sources
   CraftFile = "craft_file",

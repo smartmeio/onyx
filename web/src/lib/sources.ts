@@ -4,6 +4,7 @@ import {
   GoogleStorageIcon,
   BraintrustIcon,
   BoxIcon,
+  WebDAVIcon,
 } from "@/components/icons/icons";
 import { ValidSources } from "@/lib/connectors/types/source";
 import { SourceCategory, SourceMetadata } from "@/lib/search/types";
@@ -227,6 +228,11 @@ export const SOURCE_METADATA_MAP: SourceMap = {
     displayName: "Dropbox",
     category: SourceCategory.Storage,
     docs: `${DOCS_ADMINS_PATH}/connectors/official/dropbox`,
+  },
+  webdav: {
+    icon: WebDAVIcon,
+    displayName: "WebDAV",
+    category: SourceCategory.Storage,
   },
   s3: {
     icon: S3Icon,

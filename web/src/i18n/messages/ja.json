@@ -993,6 +993,9 @@
         "lumapps": {
           "description": "イントラネットのページとコミュニティ"
         },
+        "webdav": {
+          "description": "WebDAV サーバー用コネクタ"
+        },
         "canvas": {
           "description": "コース、ページ、お知らせ"
         },
@@ -3370,6 +3373,7 @@
         "gongBaseUrl": "任意。米国外のデータを使う場合は、https://[region].api.gong.io のようにリージョンのホストを指定します。",
         "jiraUserEmail": "Jira Cloud では必須です。",
         "lumappsServiceUser": "代理でインデックスを作成するユーザーです。",
+        "webdavAppPassword": "Nextcloud ではアプリパスワードを使用してください（設定 > セキュリティ > デバイスとセッション）。",
         "outlineBaseUrl": "例: https://app.getoutline.com、またはセルフホストの URL。",
         "pfxFile": "PFX ファイルです。",
         "testrailBaseUrl": "例: https://yourcompany.testrail.io。"

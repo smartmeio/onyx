@@ -89,4 +89,5 @@ export const SOURCE_DESCRIPTION_KEYS = {
   [ValidSources.FederatedSlack]: "sources.federatedSlack.description",
   [ValidSources.OneDrive]: "sources.onedrive.description",
   [ValidSources.Zoom]: "sources.zoom.description",
+  [ValidSources.WebDAV]: "sources.webdav.description",
 } as const satisfies Record<ValidSources, string>;

@@ -1678,6 +1678,55 @@ For example, specifying .*-alerts as a "channel to exclude" will cause the conne
     values: [],
     advanced_values: [],
   },
+  webdav: {
+    description: "Configure WebDAV connector",
+    values: [
+      {
+        type: "text",
+        label: "WebDAV URL",
+        name: "base_url",
+        optional: false,
+        default: "",
+        description:
+          "The WebDAV root of the user. For Nextcloud: https://<your-host>/remote.php/dav/files/<username>",
+      },
+      {
+        type: "list",
+        label: "Folders",
+        name: "folder_paths",
+        optional: false,
+        description:
+          "Folders to index, relative to the WebDAV URL (e.g. /Projects). Add one folder for each entry.",
+      },
+      {
+        type: "checkbox",
+        label: "Include Subfolders",
+        name: "recursive",
+        optional: true,
+        default: true,
+        description: "Also index the files in all the subfolders.",
+      },
+    ],
+    advanced_values: [
+      {
+        type: "number",
+        label: "Maximum Folder Depth",
+        name: "max_depth",
+        optional: true,
+        description:
+          "How many subfolder levels to index below each folder. 1 = only the direct subfolders. Leave empty for no limit.",
+        visibleCondition: (values) => values.recursive !== false,
+      },
+      {
+        type: "number",
+        label: "Maximum File Size (bytes)",
+        name: "max_file_size_bytes",
+        optional: true,
+        description:
+          "The connector skips files larger than this size. Default: 52428800 (50 MB).",
+      },
+    ],
+  },
   s3: {
     description: "Configure S3 connector",
     values: [
